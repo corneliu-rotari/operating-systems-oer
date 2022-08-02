@@ -249,7 +249,7 @@ gcc -fno-stack-protector   -c -o string.o string.c
 nasm -f elf64 -o syscall.o syscall.s
 gcc -nostdlib -no-pie -Wl,--entry=main -Wl,--build-id=none  main_string.o string.o syscall.o   -o main_string
 
-student@os:~/.../lab/support/common-functions$ ./main_string 
+student@os:~/.../lab/support/common-functions$ ./main_string
 Destination string is: warhammer40k
 
 student@os:~/.../lab/support/common-functions$ strace ./main_string
@@ -502,6 +502,236 @@ Enter the `support/libc/` folder and go through the practice items below.
 
 1. Create your own C program with calls to the standard C library in `vendetta.c`.
    Be as creative as you can about the types of functions being made.
+
+TODO: Quiz
+
+### Interfaces, API, ABI
+
+- part of lecture
+
+A library, such as the standard C library, exposes an **interface** that is going to be used by other software components.
+The actual library contents are the **implementation**.
+The interface consists of **header files** (`.h`).
+The implementation is the actual binary library file.
+
+Typically, a library interface (a header file) consists of:
+
+* function declarations (i.e. function headers or function signatures);
+  function definitions are typically part of the library implementation
+* definitions of structures, classes and other types
+* macros
+* variable declarations (exported symbols);
+  similarly to functions, variable definitions are typically part of the library implementation
+
+The library interface is also called the **library API** (*Application Programming Interface*).
+This is what a program that uses the library requires during the build process (compiling and linking).
+This however, doesn't guarantee the correct running of the resulting program.
+For the program to run correctly, the program itself and the library have to be binary compatible.
+That is, the calling convention and data structure layout must match.
+These form the **ABI** (*Application Binary Interface*).
+
+It is usually the job of the compiler and linker to ensure that two different pieces of binary software that are run together share the same ABI.
+ABI compatibility is required both when linking together a library and a program and when running a program on top of a given operating system.
+In the latter case, registers and memory area must be filled correctly by the program as expected by the operating system.
+
+TODO: diagram with API + ABI
+
+### Statically-linked and Dynamically-linked Libraries
+
+Libraries can be statically-linked or dynamically-linked, creating statically-linked executables and dynamically-linked executables.
+Typically, the executables found in modern operating systems are dynamically-linked, given their reduced size and ability to share libraries at runtime.
+
+The `support/static-dynamic/` folder stores the implementation of a simple "Hello, World!"-printing program that uses both static and dynamic linking of libraries.
+Let's build and run the two executables
+
+```
+student@os:~/.../lab/support/static-dynamic$ ls
+hello.c  Makefile
+
+student@os:~/.../lab/support/static-dynamic$ make
+cc -Wall   -c -o hello.o hello.c
+cc   hello.o   -o hello
+cc -static -o hello_static hello.o
+
+student@os:~/.../lab/support/static-dynamic$ ls -lh
+total 852K
+-rwxrwxr-x 1 razvan razvan 8.2K Aug  2 15:53 hello
+-rw-rw-r-- 1 razvan razvan   76 Aug  2 15:51 hello.c
+-rw-rw-r-- 1 razvan razvan 1.6K Aug  2 15:53 hello.o
+-rwxrwxr-x 1 razvan razvan 827K Aug  2 15:53 hello_static
+-rw-rw-r-- 1 razvan razvan  237 Aug  2 15:53 Makefile
+
+student@os:~/.../lab/support/static-dynamic$ ./hello
+Hello, World!
+
+student@os:~/.../lab/support/static-dynamic$ ./hello_static
+Hello, World!
+```
+
+The two executables (`hello` and `hello_static`) behave similarly, despite having vastly different sizes (`8.2K` vs. `827K` - 100 times larger).
+
+We use `nm` and `ldd` to catch differences between the two types of resulting executables:
+
+```
+student@os:~/.../lab/support/static-dynamic$ ldd hello
+        linux-vdso.so.1 (0x00007ffc8d9b2000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f10d1d88000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f10d237b000)
+
+student@os:~/.../lab/support/static-dynamic$ ldd hello_static
+        not a dynamic executable
+
+student@os:~/.../lab/support/static-dynamic$ nm hello | wc -l
+33
+
+student@os:~/.../lab/support/static-dynamic$ nm hello_static | wc -l
+1674
+```
+
+The dynamic executable references the dyamically-linked libc library (`/lib/x86_64-linux-gnu/libc.so.6`), whil the statically-linked executable has no references.
+Also, given the statically-linked executable integrated entire parts of statically-linked libraries, there are many more symbols than in the case of a dynamically-linked executable (`1674` vs. `33`).
+
+We can use `strace` to see that there are differences in the preparatory system calls for each type of executables.
+For the dynamically-linked executable, the dynamically-linked library (`/lib/x86_64-linux-gnu/libc.so.6`) is opened during runtime:
+
+```
+student@os:~/.../lab/support/static-dynamic$ strace ./hello
+execve("./hello", ["./hello"], 0x7ffc409c6640 /* 66 vars */) = 0
+brk(NULL)                               = 0x55a72eda6000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=198014, ...}) = 0
+mmap(NULL, 198014, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f3136a41000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\240\35\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2030928, ...}) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f3136a3f000
+mmap(NULL, 4131552, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f3136458000
+mprotect(0x7f313663f000, 2097152, PROT_NONE) = 0
+mmap(0x7f313683f000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e7000) = 0x7f313683f000
+mmap(0x7f3136845000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f3136845000
+close(3)                                = 0
+arch_prctl(ARCH_SET_FS, 0x7f3136a404c0) = 0
+mprotect(0x7f313683f000, 16384, PROT_READ) = 0
+mprotect(0x55a72d1bb000, 4096, PROT_READ) = 0
+mprotect(0x7f3136a72000, 4096, PROT_READ) = 0
+munmap(0x7f3136a41000, 198014)          = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 18), ...}) = 0
+brk(NULL)                               = 0x55a72eda6000
+brk(0x55a72edc7000)                     = 0x55a72edc7000
+write(1, "Hello, World!\n", 14Hello, World!
+)         = 14
+exit_group(0)                           = ?
++++ exited with 0 +++
+
+student@os:~/.../lab/support/static-dynamic$ strace ./hello_static
+execve("./hello_static", ["./hello_static"], 0x7ffc9fd45400 /* 66 vars */) = 0
+brk(NULL)                               = 0xff8000
+brk(0xff91c0)                           = 0xff91c0
+arch_prctl(ARCH_SET_FS, 0xff8880)       = 0
+uname({sysname="Linux", nodename="yggdrasil", ...}) = 0
+readlink("/proc/self/exe", "/home/razvan/school/so/operating"..., 4096) = 116
+brk(0x101a1c0)                          = 0x101a1c0
+brk(0x101b000)                          = 0x101b000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 18), ...}) = 0
+write(1, "Hello, World!\n", 14Hello, World!
+)         = 14
+exit_group(0)                           = ?
++++ exited with 0 +++
+```
+
+Similarly, we can investigate a system executable (`/bin/ls`) to see that indeed all referenced dynamically-linked libraries are opened (via the `openat` system call) at runtime:
+
+```
+student@os:~/.../lab/support/static-dynamic$ ldd $(which ls)
+	linux-vdso.so.1 (0x00007ffc3bdf3000)
+	libselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x00007f092bd88000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f092b997000)
+	libpcre.so.3 => /lib/x86_64-linux-gnu/libpcre.so.3 (0x00007f092b726000)
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f092b522000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f092c1d2000)
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f092b303000)
+
+student@os:~/.../lab/support/static-dynamic$ strace -e openat ls
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libpcre.so.3", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, ".", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 3
+community  docs  _index.html  search.md
++++ exited with 0 +++
+```
+
+- no practice
+
+TODO: Quiz
+
+### Library calls vs system calls
+
+The standard C library has primarily two uses:
+
+1. wrapping system calls into easier to use C-style library calls, such as `open()`, `write()`, `read()`
+1. adding common functionality required for our program, such as string management (`strcpy`), memory management (`malloc()`) or formatted I/O (`printf()`)
+
+The first use means a 1-to-1 mapping between library calls and system calls: one library call means one system call.
+The second group doesn't have a standard mapping.
+A library call could be mapped to no system calls, one system call, two or more system calls or it may depend (a system call may or may not happen).
+
+The `support/libcall-syscall/` folder stores the implementation of a simple program that makes different library calls.
+Let's build the program and then trace the library calls (with `ltrace`) and the system calls (with `strace`):
+
+```
+student@os:~/.../lab/support/libcall-syscall$ make
+cc -Wall   -c -o call.o call.c
+cc   call.o   -o call
+cc -Wall   -c -o call2.o call2.c
+cc   call2.o   -o call2
+
+student@os:~/.../lab/support/libcall-syscall$ ltrace ./call
+fopen("a.txt", "wt")                                                                                             = 0x556d57679260
+strlen("Hello, world!\n")                                                                                        = 14
+fwrite("Hello, world!\n", 1, 14, 0x556d57679260)                                                                 = 14
+strlen("Bye, world!\n")                                                                                          = 12
+fwrite("Bye, world!\n", 1, 12, 0x556d57679260)                                                                   = 12
+fflush(0x556d57679260)                                                                                           = 0
++++ exited (status 0) +++
+
+student@os:~/.../lab/support/libcall-syscall$ strace ./call
+[...]
+openat(AT_FDCWD, "a.txt", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+fstat(3, {st_mode=S_IFREG|0664, st_size=0, ...}) = 0
+write(3, "Hello, world!\nBye, world!\n", 26) = 26
+exit_group(0)                           = ?
++++ exited with 0 +++
+```
+
+We have the following mappings:
+* The `fopen()` library call invokes the `openat` and the `fstat` system calls.
+* The `fwrite()` library call invokes no system calls.
+* The `strlen()` library call invokes no system calls.
+* The `fflush()` library call invokes the `write` system call.
+
+This all seems to make sense.
+The main reason for `fwrite()` not making any system calls is the use of a standard C library buffer.
+Calls the `fwrite()` end up writing to that buffer to reduce the number of system calls.
+Actual system calls are made either when the standard C library buffer is full or when an `fflush()` library call is made.
+
+#### Practice
+
+Enter the `support/libcall-syscall/` folder and go through the practice items below.
+
+1. Check library calls and system calls for the `call2.c` file.
+   Use `ltrace` and `strace`.
+
+   Find explanations for the calls being made and the library call to system call mapping.
 
 TODO: Quiz
 
