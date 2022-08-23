@@ -13,7 +13,7 @@ Moreover, these pieces of instructions can be duplicated and run on different pi
 All we are left with is creating those pieces of instructions, also called programs.
 
 The most direct way to write programs is in machine code.
-First, we browse the CPU's "language" called the ISA - *Instruction Set Architecture* - and then we write the binary (machine code) instructions for our program.
+First, we browse the CPU's "language" called the ISA - _Instruction Set Architecture_ - and then we write the binary (machine code) instructions for our program.
 This is how things happened in the early days of computing, when [punched cards](https://en.wikipedia.org/wiki/Punched_card) were used.
 Obviously, this is cumbersome, error prone and a mess to maintain, update and reuse.
 
@@ -74,15 +74,20 @@ The system call API is well defined, stable and complete: it exposes the entire 
 However, it is also minimalistic with respect to features and it provides a low-level (close to hardware) specification, making it cumbersome to use and **not portable**.
 
 Due to the downsides of the system call API, a basic library, the **standard C library** (also called **libc**), is built on top of it.
-The standard C library wraps each system call into an equivalent function call, following a portable calling convention.
 Because the system call API uses an OS-specific calling convention, the standard C library typically wraps each system call into an equivalent function call, following a portable calling convention.
-More than these wraps, the standard C library provides its own API that is typically portable.
+More than these wrappers, the standard C library provides its own API that is typically portable.
 Part of the API exposed by the standard C library is the **standard C API**, also called **ANSI C** or **ISO C**;
 this API is typically portable across all platforms (operating systems and hardware).
-Despite its name, the standard C library provides APIs that may not be standard, but particular to the underlying operating systems, such as system call wrapper functions.
+This API, going beyond system call wrappers, has several advantages:
+* portability: irrespective of the underlying operating system (and system call API), the API is the same
+* extensive features: string management, I/O formatting
+* possibility of increased efficiency with techniques such as buffering, as we show later
+
+Despite its name, the standard C library provides both standard (usually portable) APIs and non-standard APIs, particular to the underlying operating systems, such as system call wrapper functions.
 
 The existence of the standard C library is reliant on the C programming language, a very simple programming language and very close to the low-level view of the memory.
-Because of this, most higher-level and more feature rich programming languages rely on the C library.
+Because of this, most higher-level and more feature rich programming languages rely on the C library:
+programs written in Rust, D, Go, Python, JavaScript and other programming languages rely on the standard C library.
 Each programming language typically provides a standard library of its own together with a runtime library, both of which rely on the C library.
 The standard C library is used to develop programs in the respective programming language.
 Conversely, the runtime library is transparent to the user and is used during runtime to provide the features required (such as exception handling, bounds checking, garbage collection etc.).
@@ -324,14 +329,14 @@ TODO: Quiz
 ### Libraries and libc
 
 Once we have common functions implemented, we can reuse them at any time.
-The main unit for software reusabibility is the **library**.
+The main unit for software reusability is the **library**.
 In short, a library is a common machine code that can be linked against different other software components.
 Each time we want to use the `printf()` function or the `strlen()` function, we don't need to reimplement them.
 We also don't need to use existing source code files, rebuild them and reuse them.
 We (re)use existing machine code in libraries.
 
 A library is a collection of object files that export given data structures and functions to be used by other programs.
-We create a program, we compile and then we link it agaist the library for all the features it provides.
+We create a program, we compile and then we link it against the library for all the features it provides.
 
 The most important library in modern operating systems is the **standard C library**, also called **libc**.
 This is the library providing system call wrappers and basic functionality for input-output, string management, memory management.
@@ -839,7 +844,7 @@ Enter the `support/high-level-lang/` folder and go through the practice items be
 
    Compare the values with those from the "Hello, World!"-printing programs in C and Python.
 
-2. Create a "Hello, World!"-printing program in a program language of your choice (other than C, Python and Go).
+2. Create a "Hello, World!"-printing program in a programming language of your choice (other than C, Python and Go).
    Find the values above (library calls, system calls and running time).
 
 TODO: Quiz
@@ -930,7 +935,7 @@ If you get stuck, take a sneak peak at the solutions in the `solution/libc/` fol
 Enter the `support/high-level-lang/` folder and go through the practice items below.
 If you get stuck, take a sneak peak at the solutions in the `solution/high-level-lang/` folder.
 
-1. Create programs in C, Python and Go that computes the N-th Fibonacci number.
+1. Create programs in C, Python and Go that compute the N-th Fibonacci number.
    `N` is passed as a command-line argument.
 
    Use `ltrace` and `strace` to compute the number of library calls and system calls.
@@ -938,7 +943,7 @@ If you get stuck, take a sneak peak at the solutions in the `solution/high-level
 
    Compare the values of the three programs.
 
-1. Create programs in C, Python and Go that copies a source file into a destination file.
+1. Create programs in C, Python and Go that copy a source file into a destination file.
    Both files are passed as the two command-line arguments for the program.
    Sample run:
 
@@ -949,4 +954,4 @@ If you get stuck, take a sneak peak at the solutions in the `solution/high-level
    Use `ltrace` and `strace` to compute the number of library calls and system calls.
    Use `perf` to measure the running time.
    Use source files of different sizes.
-   Compare the values of the three programs.
+   Compare the ouputs of these commands on the three programs.
