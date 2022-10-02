@@ -4,7 +4,7 @@ Software comprises of code and data that is loaded in memory and used by the CPU
 Code means instructions that are to be fetched by the CPU, decoded and executed.
 This is called **machine code**, i.e. binary instructions that are understood by the CPU.
 
-TODO: diagram hardware vs software - the benefit of software
+TODO: diagram hardware vs software - the benefit of software (media/hardware-software.svg)
 
 So, when compared to hardware, **software is highly flexible**.
 We can tie together specific instructions to handle a given task and run them on hardware (CPU, memory, I/O).
@@ -29,7 +29,7 @@ Programs are compiled intro corresponding assembly language code, that is then a
 Maintenance is simplified and other people can contribute to existing programs.
 Another important feature of higher-level programming languages is **portability**: the same program can be compiled and assembled to run on different architectures.
 
-TODO: Diagram with phases of a program
+TODO: Diagram with phases of a program (media/program-phases.svg)
 
 In summary, software has intrinsic characteristics:
 * **flexibility**: We can (easily) create new pieces of software.
@@ -53,7 +53,7 @@ The last two characteristics rely on two items:
   This way, a software stack ensures portability across different other parts of software (and hardware as well).
   For example, the standard C library, that we will present shortly, ensures portability across different operating systems.
 
-TODO: Diagram of generic software stack
+TODO: Diagram of generic software stack (media/sw-stack-gen.svg)
 
 TODO: Quiz
 
@@ -61,7 +61,7 @@ TODO: Quiz
 
 Most modern computing systems use a software stack such as the one in the figure below:
 
-TODO: modern software stack
+TODO: modern software stack (media/modern-sw-stack.svg)
 
 This modern software stack allows fast development and provides a rich set of applications to the user.
 
@@ -539,7 +539,7 @@ It is usually the job of the compiler and linker to ensure that two different pi
 ABI compatibility is required both when linking together a library and a program and when running a program on top of a given operating system.
 In the latter case, registers and memory area must be filled correctly by the program as expected by the operating system.
 
-TODO: diagram with API + ABI
+TODO: diagram with API + ABI (media/api-abi.svg)
 
 ### Statically-linked and Dynamically-linked Libraries
 
