@@ -17,6 +17,8 @@ jobs:
       - name: Lint Code Base
         uses: github/super-linter@v4
         env:
+          # Don't use JSCPD (for copy-paste detection).
+          VALIDATE_JSCPD: false
           # Don't check already existent files
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_GITHUB_ACTIONS: false
