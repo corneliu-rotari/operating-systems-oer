@@ -4,32 +4,13 @@ Software comprises of code and data that is loaded in memory and used by the CPU
 Code means instructions that are to be fetched by the CPU, decoded and executed.
 This is called **machine code**, i.e. binary instructions that are understood by the CPU.
 
-TODO: diagram hardware vs software - the benefit of software (media/hardware-software.svg)
+<img src="media/hardware-software.svg" alt="Hardware and Software" width="60%" />
 
 So, when compared to hardware, **software is highly flexible**.
 We can tie together specific instructions to handle a given task and run them on hardware (CPU, memory, I/O).
 Different pieces of these instructions solve different tasks and run on the same hardware.
 Moreover, these pieces of instructions can be duplicated and run on different pieces of hardware, thus providing **software reusability**.
 All we are left with is creating those pieces of instructions, also called programs.
-
-The most direct way to write programs is in machine code.
-First, we browse the CPU's "language" called the ISA - _Instruction Set Architecture_ - and then we write the binary (machine code) instructions for our program.
-This is how things happened in the early days of computing, when [punched cards](https://en.wikipedia.org/wiki/Punched_card) were used.
-Obviously, this is cumbersome, error prone and a mess to maintain, update and reuse.
-
-The next step was to use assembly language.
-Assembly language is a human-readable variant of machine code, that is more easily written.
-Assembly language programs are assembled into machine code that is then loaded in memory and run on the CPU.
-While this makes program writing easier, it still is difficult to maintain.
-
-So higher-level programming languages were devised.
-These programming languages provide a set of instructions that are closer to natural language.
-This way, programs can be relatively easy written, providing **fast software development**.
-Programs are compiled intro corresponding assembly language code, that is then assembled into machine code, that is then loaded in memory and run on the CPU.
-Maintenance is simplified and other people can contribute to existing programs.
-Another important feature of higher-level programming languages is **portability**: the same program can be compiled and assembled to run on different architectures.
-
-TODO: Diagram with phases of a program (media/program-phases.svg)
 
 In summary, software has intrinsic characteristics:
 * **flexibility**: We can (easily) create new pieces of software.
@@ -53,15 +34,15 @@ The last two characteristics rely on two items:
   This way, a software stack ensures portability across different other parts of software (and hardware as well).
   For example, the standard C library, that we will present shortly, ensures portability across different operating systems.
 
-TODO: Diagram of generic software stack (media/sw-stack-gen.svg)
+<img src="media/software-stack.svg" alt="Software Stack" width="60%" />
 
-TODO: Quiz
+[Quiz](quiz/software.md)
 
 ## Modern Software Stacks
 
 Most modern computing systems use a software stack such as the one in the figure below:
 
-TODO: modern software stack (media/modern-sw-stack.svg)
+<img src="media/modern-sw-stack.svg" alt="Modern Software Stack" width="40%" />
 
 This modern software stack allows fast development and provides a rich set of applications to the user.
 
@@ -82,24 +63,6 @@ This API, going beyond system call wrappers, has several advantages:
 * portability: irrespective of the underlying operating system (and system call API), the API is the same
 * extensive features: string management, I/O formatting
 * possibility of increased efficiency with techniques such as buffering, as we show later
-
-Despite its name, the standard C library provides both standard (usually portable) APIs and non-standard APIs, particular to the underlying operating systems, such as system call wrapper functions.
-
-The existence of the standard C library is reliant on the C programming language, a very simple programming language and very close to the low-level view of the memory.
-Because of this, most higher-level and more feature rich programming languages rely on the C library:
-programs written in Rust, D, Go, Python, JavaScript and other programming languages rely on the standard C library.
-Each programming language typically provides a standard library of its own together with a runtime library, both of which rely on the C library.
-The standard C library is used to develop programs in the respective programming language.
-Conversely, the runtime library is transparent to the user and is used during runtime to provide the features required (such as exception handling, bounds checking, garbage collection etc.).
-
-Other topic-specific libraries (image processing, encryption, compression, regular expression handling etc.) are then built on top of the standard C library and / or specific programming language libraries.
-These contribute to the overall set of APIs made available to the developer.
-
-With these APIs made available (system call API, C library API, programming language API, topic-specific APIs), the developer can rapidly create (portable) applications that are then provided to users.
-Applications benefit from the larger set of libraries available on a system;
-in other words, they employ **software reusability**.
-
-In the rest of this chapter, we will analyze the software stack for different applications, we will build and run different types of applications and libraries and we will take a peek in the implementation of modern operating systems and low-level components.
 
 ## Analyzing the Software Stack
 
@@ -170,7 +133,7 @@ In order to use C, we need function wrappers around system calls.
 Update the `hello.asm` and / or `hello.s` files to print both `Hello, world!` and `Bye, world!`.
 This means adding another `write` system call.
 
-TODO: Quiz
+[Quiz](quiz/syscalls.md)
 
 ### System Call Wrappers
 
@@ -226,7 +189,7 @@ Use that as the argument to the subsequent `write` call that prints read data.
 
 We can see that it's easier to have wrapper calls and write most of the code in C than in assembly language.
 
-TODO: Quiz
+[Quiz](quiz/syscall-wrappers.md)
 
 ### Common Functions
 
@@ -324,7 +287,7 @@ Enter the `support/common-functions/` folder and go through the practice items b
 Using previously implemented functions allows us to more efficiently write new programs.
 These functions provide us with extensive features that we use in our programs.
 
-TODO: Quiz
+[Quiz](quiz/common-functions.md)
 
 ### Libraries and libc
 
@@ -508,38 +471,7 @@ Enter the `support/libc/` folder and go through the practice items below.
 1. Create your own C program with calls to the standard C library in `vendetta.c`.
    Be as creative as you can about the types of functions being made.
 
-TODO: Quiz
-
-### Interfaces, API, ABI
-
-- part of lecture
-
-A library, such as the standard C library, exposes an **interface** that is going to be used by other software components.
-The actual library contents are the **implementation**.
-The interface consists of **header files** (`.h`).
-The implementation is the actual binary library file.
-
-Typically, a library interface (a header file) consists of:
-
-* function declarations (i.e. function headers or function signatures);
-  function definitions are typically part of the library implementation
-* definitions of structures, classes and other types
-* macros
-* variable declarations (exported symbols);
-  similarly to functions, variable definitions are typically part of the library implementation
-
-The library interface is also called the **library API** (*Application Programming Interface*).
-This is what a program that uses the library requires during the build process (compiling and linking).
-This however, doesn't guarantee the correct running of the resulting program.
-For the program to run correctly, the program itself and the library have to be binary compatible.
-That is, the calling convention and data structure layout must match.
-These form the **ABI** (*Application Binary Interface*).
-
-It is usually the job of the compiler and linker to ensure that two different pieces of binary software that are run together share the same ABI.
-ABI compatibility is required both when linking together a library and a program and when running a program on top of a given operating system.
-In the latter case, registers and memory area must be filled correctly by the program as expected by the operating system.
-
-TODO: diagram with API + ABI (media/api-abi.svg)
+[Quiz](quiz/libc.md)
 
 ### Statically-linked and Dynamically-linked Libraries
 
@@ -675,9 +607,7 @@ community  docs  _index.html  search.md
 +++ exited with 0 +++
 ```
 
-- no practice
-
-TODO: Quiz
+[Quiz](quiz/libs.md)
 
 ### Library calls vs system calls
 
@@ -738,7 +668,7 @@ Enter the `support/libcall-syscall/` folder and go through the practice items be
 
    Find explanations for the calls being made and the library call to system call mapping.
 
-TODO: Quiz
+[Quiz](quiz/libcall-syscall.md)
 
 ### High-Level Languages
 
@@ -847,8 +777,7 @@ Enter the `support/high-level-lang/` folder and go through the practice items be
 2. Create a "Hello, World!"-printing program in a programming language of your choice (other than C, Python and Go).
    Find the values above (library calls, system calls and running time).
 
-TODO: Quiz
-
+[Quiz](quiz/high-level-lang.md)
 
 ## Arena
 
