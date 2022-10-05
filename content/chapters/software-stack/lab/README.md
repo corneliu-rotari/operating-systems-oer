@@ -7,7 +7,6 @@
 - [Common Functions](content/common-functions.md)
 - [Libraries and libc](content/libc.md)
 - [Statically-linked and Dynamically-linked Libraries](content/static-dynamic.md)
-- [Libraries and libc](content/libc.md)
 - [Library calls vs system calls](content/libcall-syscall.md)
 - [High-Level Languages](content/high-level-lang.md)
 - [Arena](content/arena.md)
